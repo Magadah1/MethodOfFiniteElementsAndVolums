@@ -1,12 +1,12 @@
+import math
+
 import data
-from data import Element
 
-
-def make_grid_of_unconnected_vertices(Lx : int, Ly : int, Nx : int, Ny : int):
+def make_rectangular_grid_of_unconnected_vertices(Lx : float, Ly : float, Nx : int, Ny : int):
     """
     Создаёт прямоугольную сетку из вершин в нужном количестве и с нужными шагами.
     """
-    vertices = list[data.Vertex]()
+    vertices = []
 
     hx = Lx / Nx
     hy = Ly / Ny
@@ -19,6 +19,26 @@ def make_grid_of_unconnected_vertices(Lx : int, Ly : int, Nx : int, Ny : int):
     return vertices
 
 
+def make_radial_grid_of_unconnected_vertices(Ir : float, Or : float, Nr : int, NFi : int):
+    """
+    Создаёт радиальную сетку из вершин в нужном количестве и с нужными шагами. Центр в (0, 0)
+    """
+    vertices = []
+
+    start_angle = math.pi
+
+    hr = (Or - Ir) / Nr
+    hfi = start_angle / NFi
+
+    # послойное заполнение слева направо по возрастающему радиусу
+    for ir in range(0, Nr + 1):
+        for ifi in range(0, NFi + 1):
+            vertices.append(data.Vertex(x = (Ir + hr * ir) * math.cos(start_angle - ifi * hfi),
+                                        y = (Ir + hr * ir) * math.sin(start_angle - ifi * hfi)))
+
+    return vertices
+
+
 def convert_2d_matrix_indices_to_1d_matrix_index(i : int, j : int, m : int):
     """
     Переводит двумерный индекс в одномерный (массив представляет собой матрицу m x n, последний размер не важен).
@@ -26,86 +46,134 @@ def convert_2d_matrix_indices_to_1d_matrix_index(i : int, j : int, m : int):
     return i * (m + 1) + j
 
 
-def make_triangle_grid(Lx : int, Ly : int, Nx : int, Ny : int):
+def make_vertices_indices_like_triangle_for_elements_of_grid(vertices : list[data.Vertex], layer_size : int, column_size : int):
     """
-    Создаёт треугольную сетку.
+    Создаёт в Элементах массив индексов на Вершины таким образом, что Элемент считается треугольником.
     """
-    grid = data.Grid(Lx = Lx, Ly = Ly, Nx = Nx, Ny = Ny, elements_type = data.ElementsType.TRIANGLE)
-
-    grid.vertices = make_grid_of_unconnected_vertices(Lx=Lx, Ly=Ly, Nx=Nx, Ny=Ny)
-
+    elements = []
     # заполняем элементы сетки
-    for iy in range(0, Ny):
-        for ix in range(0, Nx):
-            element_right = Element()
-            element_right.vertices_ids.append(convert_2d_matrix_indices_to_1d_matrix_index(iy, ix, Nx))
-            element_right.vertices_ids.append(convert_2d_matrix_indices_to_1d_matrix_index(iy, ix + 1, Nx))
-            element_right.vertices_ids.append(convert_2d_matrix_indices_to_1d_matrix_index(iy + 1, ix + 1, Nx))
-            grid.elements.append(element_right)
-            element_left = Element()
-            element_left.vertices_ids.append(convert_2d_matrix_indices_to_1d_matrix_index(iy, ix, Nx))
-            element_left.vertices_ids.append(convert_2d_matrix_indices_to_1d_matrix_index(iy + 1, ix + 1, Nx))
-            element_left.vertices_ids.append(convert_2d_matrix_indices_to_1d_matrix_index(iy + 1, ix, Nx))
-            grid.elements.append(element_left)
+    for iy in range(0, column_size):
+        for ix in range(0, layer_size):
+            element_right = data.Element()
+            element_right.vertices_ids.append(convert_2d_matrix_indices_to_1d_matrix_index(iy, ix, layer_size))
+            element_right.vertices_ids.append(convert_2d_matrix_indices_to_1d_matrix_index(iy, ix + 1, layer_size))
+            element_right.vertices_ids.append(convert_2d_matrix_indices_to_1d_matrix_index(iy + 1, ix + 1, layer_size))
+            elements.append(element_right)
+            element_left = data.Element()
+            element_left.vertices_ids.append(convert_2d_matrix_indices_to_1d_matrix_index(iy, ix, layer_size))
+            element_left.vertices_ids.append(convert_2d_matrix_indices_to_1d_matrix_index(iy + 1, ix + 1, layer_size))
+            element_left.vertices_ids.append(convert_2d_matrix_indices_to_1d_matrix_index(iy + 1, ix, layer_size))
+            elements.append(element_left)
 
 
-    return grid
+    return elements
 
 
-def make_rectangle_grid(Lx : int, Ly : int, Nx : int, Ny : int):
+def make_vertices_indices_like_rectangular_for_elements_of_grid(vertices : list[data.Vertex], layer_size : int, column_size : int):
     """
     Создаёт прямоугольную сетку.
     """
-    grid = data.Grid(Lx = Lx, Ly = Ly, Nx = Nx, Ny = Ny, elements_type = data.ElementsType.RECTANGLE)
-
-    grid.vertices = make_grid_of_unconnected_vertices(Lx = Lx, Ly = Ly, Nx = Nx, Ny = Ny)
-
+    elements = []
     # заполняем элементы сетки
-    for iy in range(0, Ny):
-        for ix in range(0, Nx):
-            element = Element()
-            element.vertices_ids.append(convert_2d_matrix_indices_to_1d_matrix_index(iy, ix, Nx))
-            element.vertices_ids.append(convert_2d_matrix_indices_to_1d_matrix_index(iy, ix + 1, Nx))
-            element.vertices_ids.append(convert_2d_matrix_indices_to_1d_matrix_index(iy + 1, ix + 1, Nx))
-            element.vertices_ids.append(convert_2d_matrix_indices_to_1d_matrix_index(iy + 1, ix, Nx))
-            grid.elements.append(element)
+    for iy in range(0, column_size):
+        for ix in range(0, layer_size):
+            element = data.Element()
+            element.vertices_ids.append(convert_2d_matrix_indices_to_1d_matrix_index(iy, ix, layer_size))
+            element.vertices_ids.append(convert_2d_matrix_indices_to_1d_matrix_index(iy, ix + 1, layer_size))
+            element.vertices_ids.append(convert_2d_matrix_indices_to_1d_matrix_index(iy + 1, ix + 1, layer_size))
+            element.vertices_ids.append(convert_2d_matrix_indices_to_1d_matrix_index(iy + 1, ix, layer_size))
+            elements.append(element)
 
 
-    return grid
+    return elements
 
 
 def make_grid():
     """
-    Считывает из консоли данные в следующем формате: Lx, Ly, Nx, Ny, Type(0 - TRIANGLE, 1 - RECTANGLE).
+    Считывает из консоли данные в следующем формате: Grid_Type(0 - RECTANGULAR, 1 - RADIAL)
+    Lx, Ly, Nx, Ny, Element_Type(0 - TRIANGLE, 1 - RECTANGLE). - Если Grid_Type == GridType.RECTANGULAR
+    Ir, Or, Nr, Nfi, Element_Type(0 - TRIANGLE, 1 - RECTANGLE). - Если Grid_Type == GridType.RADIAL
     Где:
-    Lx, Ly - размеры сетки.
-    Nx, Ny - количество разбиений по каждой оси.
-    Type - тип ячеек сетки.
+    Grid_Type - тип сетки.
+    Lx, Ly - размеры прямоугольной сетки. (Ir, Or - внутренний и внешний радиусы)
+    Nx, Ny - количество разбиений по каждой оси у прямоугольной сетки. (Nr, NFi - количество разбиений по радиусу и углу)
+    Element_Type - тип ячеек сетки.
 
     Далее вызывают соответствующую типу сетки функцию её создания.
     При некорректном считывании данных возвращает None.
 
-    TODO: добавить считывание материала элементов и ГУ.
+    TODO: добавить считывание ГУ.
     """
-    print("Введите данные сетки в следующем формате: Lx, Ly, Nx, Ny, Type(0 - TRIANGLE, 1 - RECTANGLE).")
-    try:
-        Lx, Ly, Nx, Ny, Type = [int(s) for s in input().split()]
+    print("Введите тип сетки, т.е. способ расположения узлов: Grid_Type(0 - RECTANGULAR, 1 - RADIAL)")
+    Grid_Type = int(input())
 
-        Lx = max(Lx, 0)
-        Ly = max(Ly, 0)
-        Nx = max(Nx, 1)
-        Ny = max(Ny, 1)
+    if Grid_Type == data.GridType.RECTANGULAR.value:
+        print("Введите данные сетки в следующем формате: Lx, Ly, Nx, Ny, Element_Type(0 - TRIANGLE, 1 - RECTANGLE).")
+        try:
+            Lx, Ly, Nx, Ny, Element_Type = [float(s) for s in input().split()]
 
-        if Type == data.ElementsType.TRIANGLE.value:
-            print("Генерируется сетка с элементами типа Треугольник")
-            return make_triangle_grid(Lx, Ly, Nx, Ny)
+            Lx = max(Lx, 0)
+            Ly = max(Ly, 0)
+            Nx = int(max(Nx, 1))
+            Ny = int(max(Ny, 1))
 
-        if Type == data.ElementsType.RECTANGLE.value:
-            print("Генерируется сетка с элементами типа Прямоугольник")
-            return make_rectangle_grid(Lx, Ly, Nx, Ny)
+            grid = data.Grid()
+            grid.grid_type = Grid_Type
 
-    except ValueError :
-        print("Ошибка при считывании данных сетки!")
-        return None
+            grid.vertices = make_rectangular_grid_of_unconnected_vertices(Lx, Ly, Nx, Ny)
 
+            if Element_Type == data.ElementsType.TRIANGLE.value:
+                print("Генерируется прямоугольная сетка с элементами типа Треугольник")
+                grid.elements_type = Element_Type
+                grid.elements = make_vertices_indices_like_triangle_for_elements_of_grid(grid.vertices, Nx, Ny)
+                return grid
+
+            if Element_Type == data.ElementsType.RECTANGLE.value:
+                print("Генерируется прямоугольная сетка с элементами типа Прямоугольник")
+                grid.elements_type = Element_Type
+                grid.elements = make_vertices_indices_like_rectangular_for_elements_of_grid(grid.vertices, Nx, Ny)
+                return grid
+
+            print("Неизвестный тип Элементов сетки!")
+            return None
+
+        except ValueError :
+            print("Ошибка при считывании данных сетки!")
+            return None
+
+    elif Grid_Type == data.GridType.RADIAL.value:
+        print("Введите данные сетки в следующем формате: Ir, Or, Nr, NFi, Element_Type(0 - TRIANGLE, 1 - RECTANGLE).")
+        try:
+            Ir, Or, Nr, NFi, Element_Type = [float(s) for s in input().split()]
+
+            Ir = max(Ir, 0)
+            Or = max(Or, 0)
+            Nr = int(max(Nr, 1))
+            NFi = int(max(NFi, 1))
+
+            grid = data.Grid()
+            grid.grid_type = Grid_Type
+
+            grid.vertices = make_radial_grid_of_unconnected_vertices(Ir, Or, Nr, NFi)
+
+            if Element_Type == data.ElementsType.TRIANGLE.value:
+                print("Генерируется прямоугольная сетка с элементами типа Треугольник")
+                grid.elements_type = Element_Type
+                grid.elements = make_vertices_indices_like_triangle_for_elements_of_grid(grid.vertices, NFi, Nr)
+                return grid
+
+            if Element_Type == data.ElementsType.RECTANGLE.value:
+                print("Генерируется прямоугольная сетка с элементами типа Прямоугольник")
+                grid.elements_type = Element_Type
+                grid.elements = make_vertices_indices_like_rectangular_for_elements_of_grid(grid.vertices, NFi, Nr)
+                return grid
+
+            print("Неизвестный тип Элементов сетки!")
+            return None
+
+        except ValueError:
+            print("Ошибка при считывании данных сетки!")
+            return None
+
+    print("Выбран недопустимый тип сетки!")
     return None
