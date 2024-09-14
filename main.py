@@ -1,7 +1,6 @@
 import numpy as np
 import pyamg
 import matplotlib.pyplot as plt
-from pyamg import smoothed_aggregation_solver
 
 import data_functions
 
@@ -12,7 +11,7 @@ def main():
     for i in range(0, 3):
         for j in range(0, 3):
             A[i, j] = i == j
-    m1 = smoothed_aggregation_solver(A)
+    m1 = pyamg.smoothed_aggregation_solver(A)
     b = np.random.rand(3)
     for i in range(0, 3):
         b[i] = 1
