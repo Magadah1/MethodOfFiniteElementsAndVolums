@@ -157,13 +157,13 @@ def make_grid():
             grid.vertices = make_radial_grid_of_unconnected_vertices(Ir, Or, Nr, NFi)
 
             if Element_Type == data.ElementsType.TRIANGLE.value:
-                print("Генерируется прямоугольная сетка с элементами типа Треугольник")
+                print("Генерируется радиальная сетка с элементами типа Треугольник")
                 grid.elements_type = Element_Type
                 grid.elements = make_vertices_indices_like_triangle_for_elements_of_grid(grid.vertices, NFi, Nr)
                 return grid
 
             if Element_Type == data.ElementsType.RECTANGLE.value:
-                print("Генерируется прямоугольная сетка с элементами типа Прямоугольник")
+                print("Генерируется радиальная сетка с элементами типа Прямоугольник")
                 grid.elements_type = Element_Type
                 grid.elements = make_vertices_indices_like_rectangular_for_elements_of_grid(grid.vertices, NFi, Nr)
                 return grid
