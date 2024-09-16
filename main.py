@@ -1,8 +1,6 @@
-from traceback import print_tb
-
 import numpy as np
 import pyamg
-
+import matplotlib.pyplot as plt
 
 import data_functions
 
@@ -37,15 +35,25 @@ def main():
         print()
 
     # рисуем сетку
-    fig, ax = data_functions.plt.subplots()
-    fig1, ax1 = data_functions.plt.subplots()
-    fig2, ax2 = data_functions.plt.subplots()
+    fig, beforeNone = plt.subplots()
+    fig1, beforeLin = plt.subplots()
+    fig2, beforeQuad = plt.subplots()
 
-    data_functions.draw_grid(grid, ax)
-    data_functions.draw_function_on_grid(grid, lambda x, y : x + y, ax1)
-    data_functions.draw_function_on_grid(grid, lambda x, y : (x**2 + y**2)**0.5, ax2)
+    data_functions.draw_grid(grid, beforeNone)
+    data_functions.draw_function_on_grid(grid, lambda x, y : x + y, beforeLin)
+    data_functions.draw_function_on_grid(grid, lambda x, y : (x**2 + y**2)**0.5, beforeQuad)
 
-    data_functions.plt.show()
+    data_functions.random_grid_translation(grid)
+
+    fig3, afterNone = plt.subplots()
+    fig4, afterLin = plt.subplots()
+    fig5, afterQuad = plt.subplots()
+
+    data_functions.draw_grid(grid, afterNone)
+    data_functions.draw_function_on_grid(grid, lambda x, y : x + y, afterLin)
+    data_functions.draw_function_on_grid(grid, lambda x, y : (x ** 2 + y ** 2) ** 0.5, afterQuad)
+
+    plt.show()
 
 
 if __name__ == '__main__':
