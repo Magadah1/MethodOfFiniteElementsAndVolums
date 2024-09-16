@@ -2,7 +2,7 @@ from traceback import print_tb
 
 import numpy as np
 import pyamg
-import matplotlib.pyplot as plt
+
 
 import data_functions
 
@@ -29,14 +29,23 @@ def main():
         print('x=%f;y=%f'%(vertex.x, vertex.y))
 
     for i, element in enumerate(grid.elements):
-        print('element#%d'%(i))
+        print('element#%d'%i)
         print(' _ ', end='')
         for vertex_id in element.vertices_ids:
             vertex = grid.vertices[vertex_id]
             print('x=%f;y%f'%(vertex.x, vertex.y), end=' _ ')
         print()
 
+    # рисуем сетку
+    fig, ax = data_functions.plt.subplots()
+    fig1, ax1 = data_functions.plt.subplots()
+    fig2, ax2 = data_functions.plt.subplots()
 
+    data_functions.draw_grid(grid, ax)
+    data_functions.draw_function_on_grid(grid, lambda x, y : x + y, ax1)
+    data_functions.draw_function_on_grid(grid, lambda x, y : (x**2 + y**2)**0.5, ax2)
+
+    data_functions.plt.show()
 
 
 if __name__ == '__main__':

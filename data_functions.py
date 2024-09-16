@@ -1,4 +1,5 @@
 import math
+import matplotlib.pyplot as plt
 
 import data
 
@@ -177,3 +178,49 @@ def make_grid():
 
     print("Выбран недопустимый тип сетки!")
     return None
+
+
+def make_triangles_from_grid(grid : data.Grid):
+    triangles = []
+
+    if grid.elements_type == data.ElementsType.TRIANGLE.value:
+        for element in grid.elements:
+            triangles.append(element.vertices_ids)
+    elif grid.elements_type == data.ElementsType.RECTANGLE.value:
+        for element in grid.elements:
+            triangles.append([element.vertices_ids[0], element.vertices_ids[1], element.vertices_ids[2]])
+            triangles.append([element.vertices_ids[0], element.vertices_ids[2], element.vertices_ids[3]])
+
+    return triangles
+
+
+def draw_grid(grid : data.Grid, ax):
+    """
+    Подготавливает сетку к отрисовке и рисует.
+    """
+    x = []
+    y = []
+    for vert in grid.vertices:
+        x.append(vert.x)
+        y.append(vert.y)
+
+    triangles = make_triangles_from_grid(grid)
+
+    ax.triplot(x, y, triangles)
+
+
+def draw_function_on_grid(grid : data.Grid, f, ax):
+    """
+    Подготавливает сетку к отрисовке и рисует на ней функцию.
+    """
+    x = []
+    y = []
+    z = []
+    for vert in grid.vertices:
+        x.append(vert.x)
+        y.append(vert.y)
+        z.append(f(vert.x, vert.y))
+
+    triangles = make_triangles_from_grid(grid)
+
+    ax.tripcolor(x, y, z, triangles=triangles)
