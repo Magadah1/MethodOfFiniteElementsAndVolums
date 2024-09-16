@@ -50,8 +50,8 @@ def main():
     fig5, afterQuad = plt.subplots()
 
     data_functions.draw_grid(grid, afterNone)
-    data_functions.draw_function_on_grid(grid, lambda x, y: x + y, afterLin)
-    data_functions.draw_function_on_grid(grid, lambda x, y: (x ** 2 + y ** 2) ** 0.5, afterQuad)
+    data_functions.draw_function_on_grid(grid, lambda x, y : x + y, afterLin)
+    data_functions.draw_function_on_grid(grid, lambda x, y : (x ** 2 + y ** 2) ** 0.5, afterQuad)
 
     plt.show()
 
