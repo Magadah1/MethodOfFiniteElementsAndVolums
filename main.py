@@ -38,8 +38,12 @@ def main():
 
     # рисуем сетку
     fig, ax = data_functions.plt.subplots()
+    fig1, ax1 = data_functions.plt.subplots()
+    fig2, ax2 = data_functions.plt.subplots()
 
     data_functions.draw_grid(grid, ax)
+    data_functions.draw_function_on_grid(grid, lambda x, y : x + y, ax1)
+    data_functions.draw_function_on_grid(grid, lambda x, y : (x**2 + y**2)**0.5, ax2)
 
     data_functions.plt.show()
 

@@ -207,3 +207,22 @@ def draw_grid(grid : data.Grid, ax):
     triangles = make_triangles_from_grid(grid)
 
     ax.triplot(x, y, triangles)
+
+
+def draw_function_on_grid(grid : data.Grid, f, ax):
+    """
+    Подготавливает сетку к отрисовке и рисует на ней функцию.
+    """
+    x = []
+    y = []
+    z = []
+    for vert in grid.vertices:
+        x.append(vert.x)
+        y.append(vert.y)
+        z.append(f(vert.x, vert.y))
+
+    print(z)
+
+    triangles = make_triangles_from_grid(grid)
+
+    ax.tripcolor(x, y, z, triangles=triangles)
