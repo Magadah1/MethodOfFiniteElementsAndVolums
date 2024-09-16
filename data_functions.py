@@ -1,5 +1,5 @@
 import math
-import matplotlib.pyplot as plt
+import random
 
 import data
 
@@ -224,3 +224,9 @@ def draw_function_on_grid(grid : data.Grid, f, ax):
     triangles = make_triangles_from_grid(grid)
 
     ax.tripcolor(x, y, z, triangles=triangles)
+
+
+def random_grid_translation(grid : data.Grid):
+    for vert in grid.vertices:
+        vert.x += -0.5 + random.random()
+        vert.y += -0.5 + random.random()
