@@ -41,7 +41,7 @@ def main():
 
     data_functions.draw_grid(grid, beforeNone)
     data_functions.draw_function_on_grid(grid, lambda x, y : x + y, beforeLin)
-    data_functions.draw_function_on_grid(grid, lambda x, y : (x**2 + y**2)**0.5, beforeQuad)
+    data_functions.draw_function_on_grid(grid, lambda x, y : (x ** 2 + y ** 2) ** 0.5, beforeQuad)
 
     data_functions.random_grid_translation(grid)
 
