@@ -5,6 +5,12 @@ import data
 
 
 def get_angle_between_vectors_in_degrees(v1 : data.Vertex, v2 : data.Vertex):
+    """
+    Определяет угол (в градусах) между двумя векторами.
+    :param v1:
+    :param v2:
+    :return:
+    """
     v1_l = math.sqrt(v1.x ** 2 + v1.y ** 2)
     v2_l = math.sqrt(v2.x ** 2 + v2.y ** 2)
 
@@ -140,9 +146,9 @@ def fill_vertices_in_edges_in_grid_of_triangle(layer_size : int, column_size : i
 
 def fill_vertices_in_edges_in_grid_of_rectangle(layer_size : int, column_size : int):
     """
-        Заполняет узлы, из которых состоит ребро. Элементы представляют собой Прямоугольники.
-        Отдельно обрабатывает "верхний" слой.
-        """
+    Заполняет узлы, из которых состоит ребро. Элементы представляют собой Прямоугольники.
+    Отдельно обрабатывает "верхний" слой.
+    """
     edges = list[data.Edge]()
 
     for iy in range(0, column_size):
