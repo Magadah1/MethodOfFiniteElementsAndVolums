@@ -3,11 +3,12 @@ import random
 
 import data
 
+
 def make_rectangular_grid_of_unconnected_vertices(Lx : float, Ly : float, Nx : int, Ny : int):
     """
     Создаёт прямоугольную сетку из вершин в нужном количестве и с нужными шагами.
     """
-    vertices = []
+    vertices = list[data.Vertex]()
 
     hx = Lx / Nx
     hy = Ly / Ny
@@ -22,9 +23,9 @@ def make_rectangular_grid_of_unconnected_vertices(Lx : float, Ly : float, Nx : i
 
 def make_radial_grid_of_unconnected_vertices(Ir : float, Or : float, Nr : int, NFi : int):
     """
-    Создаёт радиальную сетку из вершин в нужном количестве и с нужными шагами. Центр в (0, 0)
+    Создаёт радиальную сетку из вершин в нужном количестве и с нужными шагами. Центр в (0, 0).
     """
-    vertices = []
+    vertices = list[data.Vertex]()
 
     start_angle = math.pi
 
@@ -51,7 +52,7 @@ def make_vertices_indices_like_triangle_for_elements_of_grid(vertices : list[dat
     """
     Создаёт в Элементах массив индексов на Вершины таким образом, что Элемент считается треугольником.
     """
-    elements = []
+    elements = list[data.Element]()
     # заполняем элементы сетки
     for iy in range(0, column_size):
         for ix in range(0, layer_size):
@@ -74,7 +75,7 @@ def make_vertices_indices_like_rectangular_for_elements_of_grid(vertices : list[
     """
     Создаёт прямоугольную сетку.
     """
-    elements = []
+    elements = list[data.Element]()
     # заполняем элементы сетки
     for iy in range(0, column_size):
         for ix in range(0, layer_size):
@@ -87,6 +88,64 @@ def make_vertices_indices_like_rectangular_for_elements_of_grid(vertices : list[
 
 
     return elements
+
+
+def fill_vertices_in_edges_in_grid_of_triangle(layer_size : int, column_size : int):
+    """
+    Заполняет узлы, из которых состоит ребро. Элементы представляют собой Треугольники.
+    Отдельно обрабатывает "верхний" слой.
+    """
+    edges = list[data.Edge]()
+
+    for iy in range(0, column_size):
+        for ix in range(0, layer_size):
+            edges.append(data.Edge(
+                v1 = convert_2d_matrix_indices_to_1d_matrix_index(iy, ix, layer_size),
+                v2 = convert_2d_matrix_indices_to_1d_matrix_index(iy, ix + 1, layer_size)
+            ))
+            edges.append(data.Edge(
+                v1 = convert_2d_matrix_indices_to_1d_matrix_index(iy, ix, layer_size),
+                v2 = convert_2d_matrix_indices_to_1d_matrix_index(iy + 1, ix, layer_size)
+            ))
+            edges.append(data.Edge(
+                v1 = convert_2d_matrix_indices_to_1d_matrix_index(iy, ix, layer_size),
+                v2 = convert_2d_matrix_indices_to_1d_matrix_index(iy + 1, ix + 1, layer_size)
+            ))
+
+    for ix in range(0, layer_size):
+        edges.append(data.Edge(
+            v1=convert_2d_matrix_indices_to_1d_matrix_index(column_size, ix, layer_size),
+            v2=convert_2d_matrix_indices_to_1d_matrix_index(column_size, ix + 1, layer_size)
+        ))
+
+    return edges
+
+
+def fill_vertices_in_edges_in_grid_of_rectangle(layer_size : int, column_size : int):
+    """
+        Заполняет узлы, из которых состоит ребро. Элементы представляют собой Прямоугольники.
+        Отдельно обрабатывает "верхний" слой.
+        """
+    edges = list[data.Edge]()
+
+    for iy in range(0, column_size):
+        for ix in range(0, layer_size):
+            edges.append(data.Edge(
+                v1 = convert_2d_matrix_indices_to_1d_matrix_index(iy, ix, layer_size),
+                v2 = convert_2d_matrix_indices_to_1d_matrix_index(iy, ix + 1, layer_size)
+            ))
+            edges.append(data.Edge(
+                v1 = convert_2d_matrix_indices_to_1d_matrix_index(iy, ix, layer_size),
+                v2 = convert_2d_matrix_indices_to_1d_matrix_index(iy + 1, ix, layer_size)
+            ))
+
+    for ix in range(0, layer_size):
+        edges.append(data.Edge(
+            v1 = convert_2d_matrix_indices_to_1d_matrix_index(column_size, ix, layer_size),
+            v2 = convert_2d_matrix_indices_to_1d_matrix_index(column_size, ix + 1, layer_size)
+        ))
+
+    return edges
 
 
 def make_grid():
@@ -104,6 +163,7 @@ def make_grid():
     При некорректном считывании данных возвращает None.
 
     TODO: добавить считывание ГУ.
+    TODO: добавить определение левой и правой ячеек.
     """
     print("Введите тип сетки, т.е. способ расположения узлов: Grid_Type(0 - RECTANGULAR, 1 - RADIAL)")
     Grid_Type = int(input())
@@ -127,12 +187,14 @@ def make_grid():
                 print("Генерируется прямоугольная сетка с элементами типа Треугольник")
                 grid.elements_type = Element_Type
                 grid.elements = make_vertices_indices_like_triangle_for_elements_of_grid(grid.vertices, Nx, Ny)
+                grid.edges = fill_vertices_in_edges_in_grid_of_triangle(Nx, Ny)
                 return grid
 
             if Element_Type == data.ElementsType.RECTANGLE.value:
                 print("Генерируется прямоугольная сетка с элементами типа Прямоугольник")
                 grid.elements_type = Element_Type
                 grid.elements = make_vertices_indices_like_rectangular_for_elements_of_grid(grid.vertices, Nx, Ny)
+                grid.edges = fill_vertices_in_edges_in_grid_of_rectangle(Nx, Ny)
                 return grid
 
             print("Неизвестный тип Элементов сетки!")
@@ -161,12 +223,14 @@ def make_grid():
                 print("Генерируется радиальная сетка с элементами типа Треугольник")
                 grid.elements_type = Element_Type
                 grid.elements = make_vertices_indices_like_triangle_for_elements_of_grid(grid.vertices, NFi, Nr)
+                grid.edges = fill_vertices_in_edges_in_grid_of_triangle(NFi, Nr)
                 return grid
 
             if Element_Type == data.ElementsType.RECTANGLE.value:
                 print("Генерируется радиальная сетка с элементами типа Прямоугольник")
                 grid.elements_type = Element_Type
                 grid.elements = make_vertices_indices_like_rectangular_for_elements_of_grid(grid.vertices, NFi, Nr)
+                grid.edges = fill_vertices_in_edges_in_grid_of_rectangle(NFi, Nr)
                 return grid
 
             print("Неизвестный тип Элементов сетки!")
@@ -181,6 +245,9 @@ def make_grid():
 
 
 def make_triangles_from_grid(grid : data.Grid):
+    """
+    Создаёт массив из массивов индексов на узлы сетке, образующие треугольники в правильном обходе (против часовой стрелки).
+    """
     triangles = []
 
     if grid.elements_type == data.ElementsType.TRIANGLE.value:
@@ -227,6 +294,9 @@ def draw_function_on_grid(grid : data.Grid, f, ax):
 
 
 def random_grid_translation(grid : data.Grid):
+    """
+    Случайно смещает узлы сетки.
+    """
     for vert in grid.vertices:
         vert.x += -0.5 + random.random()
         vert.y += -0.5 + random.random()
