@@ -110,7 +110,7 @@ class Element:
     def get_triangle_area_implementation(self, v1_id, v2_id, v3_id, vertices : list[Vertex]):
         """
         Реализация вычисления площади плоского треугольника.
-        Из-за специфики хранения данных требует массив вершин, из 2х из которых состоит Элемент.
+        Из-за специфики хранения данных требует массив вершин, из которых состоит Элемент.
         """
         vl = vertices[v1_id]
         vm = vertices[v2_id]
@@ -125,7 +125,7 @@ class Element:
     def get_triangle_area(self, vertices : list[Vertex]):
         """
         Возвращает площадь Элемента формы Треугольник.
-        Из-за специфики хранения данных требует массив вершин, из 2х из которых состоит Элемент.
+        Из-за специфики хранения данных требует массив вершин, из которых состоит Элемент.
         """
         return self.get_triangle_area_implementation(self.vertices_ids[0],
                                                      self.vertices_ids[1],
@@ -137,7 +137,7 @@ class Element:
     def get_rectangle_area(self, vertices : list[Vertex]):
         """
         Возвращает площадь Элемента формы Прямоугольник.
-        Из-за специфики хранения данных требует массив вершин, из 2х из которых состоит Элемент.
+        Из-за специфики хранения данных требует массив вершин, из которых состоит Элемент.
         """
         return (self.get_triangle_area_implementation(self.vertices_ids[0],
                                                      self.vertices_ids[1],
