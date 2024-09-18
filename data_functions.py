@@ -4,6 +4,17 @@ import random
 import data
 
 
+def get_angle_between_vectors_in_degrees(v1 : data.Vertex, v2 : data.Vertex):
+    v1_l = math.sqrt(v1.x ** 2 + v1.y ** 2)
+    v2_l = math.sqrt(v2.x ** 2 + v2.y ** 2)
+
+    like_cos = min(1.0, max(0.0, (v1.x * v2.x + v1.y * v2.y) / (v1_l * v2_l))) # из-за ошибок округления можем выйти за значения cos
+
+    angle_in_radians = math.acos(like_cos)
+
+    return angle_in_radians * 180 / math.pi
+
+
 def make_rectangular_grid_of_unconnected_vertices(Lx : float, Ly : float, Nx : int, Ny : int):
     """
     Создаёт прямоугольную сетку из вершин в нужном количестве и с нужными шагами.
@@ -93,7 +104,7 @@ def make_vertices_indices_like_rectangular_for_elements_of_grid(vertices : list[
 def fill_vertices_in_edges_in_grid_of_triangle(layer_size : int, column_size : int):
     """
     Заполняет узлы, из которых состоит ребро. Элементы представляют собой Треугольники.
-    Отдельно обрабатывает "верхний" слой.
+    Отдельно обрабатывает "верхний" и "правый" слои.
     """
     edges = list[data.Edge]()
 
@@ -114,8 +125,14 @@ def fill_vertices_in_edges_in_grid_of_triangle(layer_size : int, column_size : i
 
     for ix in range(0, layer_size):
         edges.append(data.Edge(
-            v1=convert_2d_matrix_indices_to_1d_matrix_index(column_size, ix, layer_size),
-            v2=convert_2d_matrix_indices_to_1d_matrix_index(column_size, ix + 1, layer_size)
+            v1 = convert_2d_matrix_indices_to_1d_matrix_index(column_size, ix, layer_size),
+            v2 = convert_2d_matrix_indices_to_1d_matrix_index(column_size, ix + 1, layer_size)
+        ))
+
+    for iy in range(0, column_size):
+        edges.append(data.Edge(
+            v1 = convert_2d_matrix_indices_to_1d_matrix_index(iy, layer_size, layer_size),
+            v2 = convert_2d_matrix_indices_to_1d_matrix_index(iy + 1, layer_size, layer_size)
         ))
 
     return edges
@@ -145,7 +162,78 @@ def fill_vertices_in_edges_in_grid_of_rectangle(layer_size : int, column_size : 
             v2 = convert_2d_matrix_indices_to_1d_matrix_index(column_size, ix + 1, layer_size)
         ))
 
+    for iy in range(0, column_size):
+        edges.append(data.Edge(
+            v1 = convert_2d_matrix_indices_to_1d_matrix_index(iy, layer_size, layer_size),
+            v2 = convert_2d_matrix_indices_to_1d_matrix_index(iy + 1, layer_size, layer_size)
+        ))
+
     return edges
+
+
+def fill_edges_in_element(element : data.Element, grid : data.Grid):
+    """
+    Заполняет из каких Рёбер состоит конкретный Элемент сетки.
+    """
+    edges = set()
+    for vert_id in element.vertices_ids: # пройдёмся по индексам узлов, из которых состоит элемент
+        for edge_id, edge in enumerate(grid.edges): # для каждого из них проверим, в каком ребре он есть
+            if edge.v1 == vert_id and edge.v2 in element.vertices_ids: # если найден, то пробуем найти второй узел ребра в текущем элементе
+                edges.add(edge_id) # если нашли, то добавляем узел в сет, т.к. могут быть повторы для каждого узла ребра
+            elif edge.v2 == vert_id and edge.v1 in element.vertices_ids:
+                edges.add(edge_id)
+
+    element.edges_ids = list(edges)
+
+
+def fill_edges_in_elements(grid : data.Grid):
+    """
+    Заполняет из каких Рёбер состоят Элементы сетки.
+    """
+    for element in grid.elements:
+        fill_edges_in_element(element, grid)
+
+
+def fill_left_and_right_elements_in_edge(edge : data.Edge, elements : list[data.Element], grid : data.Grid):
+    """
+    Заполняет "левый" и "правый" Элементы у конкретного Ребра сетки.
+    Размер elements считается равным 2.
+    """
+    edge_normal : data.Vertex = edge.get_normal(grid.vertices) # считаем вектором
+    el1_center : data.Vertex = grid.elements[elements[0]].get_center(grid.vertices)
+    el2_center : data.Vertex = grid.elements[elements[1]].get_center(grid.vertices)
+
+    v_from_1_to_2_elements = data.Vertex(
+        x = el2_center.x - el1_center.x,
+        y = el2_center.y - el1_center.y
+    )
+
+    if get_angle_between_vectors_in_degrees(edge_normal, v_from_1_to_2_elements) <= 90: # если угол острый, то el1 - левая
+        edge.element_left = elements[0]
+        edge.element_right = elements[1]
+    else: # угол тупой, значит не сонаправлен нормали
+        edge.element_left = elements[1]
+        edge.element_right = elements[0]
+
+
+def fill_elements_in_edges(grid : data.Grid):
+    """
+    Заполняет "левый" и "правый" Элементы у Рёбер сетки.
+    """
+    edge_to_cells = {}
+    for edge_id, edge in enumerate(grid.edges): # для каждого ребра переберём все элементы
+        if edge_id not in edge_to_cells: # будем для ребра записывать номера элементов, которым оно принадлежит
+            edge_to_cells[edge_id] = []
+        for element_id, element in enumerate(grid.elements):
+            if edge_id in element.edges_ids: # если ребро принадлежит элементу, то запишем его индекс
+                edge_to_cells[edge_id].append(element_id)
+    # теперь определим левые и правые элементы. Если у ребра только один содержащий его элемент, то он - левый
+    for edge_id, edge_cells in edge_to_cells.items():
+        if len(edge_cells) == 1:
+            grid.edges[edge_id].element_left = edge_cells[0]
+        elif len(edge_cells) == 2: # ребро по определению не может принадлежать более 2м элементам
+            fill_left_and_right_elements_in_edge(grid.edges[edge_id], edge_cells, grid)
+
 
 
 def make_grid():
@@ -188,6 +276,8 @@ def make_grid():
                 grid.elements_type = Element_Type
                 grid.elements = make_vertices_indices_like_triangle_for_elements_of_grid(grid.vertices, Nx, Ny)
                 grid.edges = fill_vertices_in_edges_in_grid_of_triangle(Nx, Ny)
+                fill_edges_in_elements(grid)
+                fill_elements_in_edges(grid)
                 return grid
 
             if Element_Type == data.ElementsType.RECTANGLE.value:
@@ -195,6 +285,8 @@ def make_grid():
                 grid.elements_type = Element_Type
                 grid.elements = make_vertices_indices_like_rectangular_for_elements_of_grid(grid.vertices, Nx, Ny)
                 grid.edges = fill_vertices_in_edges_in_grid_of_rectangle(Nx, Ny)
+                fill_edges_in_elements(grid)
+                fill_elements_in_edges(grid)
                 return grid
 
             print("Неизвестный тип Элементов сетки!")
@@ -211,6 +303,9 @@ def make_grid():
 
             Ir = max(Ir, 0)
             Or = max(Or, 0)
+            if Ir == Or:
+                print("Нельзя использовать одинаковые внутренний и внешний радиусы! Увеличиваю внешний на 1!")
+                Ir += 1
             Nr = int(max(Nr, 1))
             NFi = int(max(NFi, 1))
 
@@ -224,6 +319,8 @@ def make_grid():
                 grid.elements_type = Element_Type
                 grid.elements = make_vertices_indices_like_triangle_for_elements_of_grid(grid.vertices, NFi, Nr)
                 grid.edges = fill_vertices_in_edges_in_grid_of_triangle(NFi, Nr)
+                fill_edges_in_elements(grid)
+                fill_elements_in_edges(grid)
                 return grid
 
             if Element_Type == data.ElementsType.RECTANGLE.value:
@@ -231,6 +328,8 @@ def make_grid():
                 grid.elements_type = Element_Type
                 grid.elements = make_vertices_indices_like_rectangular_for_elements_of_grid(grid.vertices, NFi, Nr)
                 grid.edges = fill_vertices_in_edges_in_grid_of_rectangle(NFi, Nr)
+                fill_edges_in_elements(grid)
+                fill_elements_in_edges(grid)
                 return grid
 
             print("Неизвестный тип Элементов сетки!")
@@ -276,21 +375,20 @@ def draw_grid(grid : data.Grid, ax):
     ax.triplot(x, y, triangles)
 
 
-def draw_function_on_grid(grid : data.Grid, f, ax):
+def draw_function_on_grid(grid : data.Grid, ax):
     """
     Подготавливает сетку к отрисовке и рисует на ней функцию.
     """
     x = []
     y = []
-    z = []
     for vert in grid.vertices:
         x.append(vert.x)
         y.append(vert.y)
-        z.append(f(vert.x, vert.y))
 
     triangles = make_triangles_from_grid(grid)
+    grid.calculate_function_on_grid()
 
-    ax.tripcolor(x, y, z, triangles=triangles)
+    ax.tripcolor(x, y, grid.function_values, triangles=triangles)
 
 
 def random_grid_translation(grid : data.Grid):

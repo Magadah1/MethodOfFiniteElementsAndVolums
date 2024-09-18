@@ -23,8 +23,8 @@ def main():
     # то, что сверху - временная мера
     grid = data_functions.make_grid()
 
-    for vertex in grid.vertices:
-        print('x=%f;y=%f'%(vertex.x, vertex.y))
+    for v_id, vertex in enumerate(grid.vertices):
+        print('v#%d:x=%f;y=%f'%(v_id, vertex.x, vertex.y))
 
     for i, element in enumerate(grid.elements):
         print('element#%d'%i)
@@ -33,6 +33,14 @@ def main():
             vertex = grid.vertices[vertex_id]
             print('x=%f;y%f'%(vertex.x, vertex.y), end=' _ ')
         print()
+        for edge_id in element.edges_ids:
+            edge = grid.edges[edge_id]
+            print(' _ ', end='')
+            print('\tedge#%d;v1=%d;v2=%d;e_l=%d;e_r=%d'%(edge_id, edge.v1, edge.v2, edge.element_left, edge.element_right), end=' _ ')
+            print('')
+
+    for v_id in range(len(grid.vertices)):
+        print("around v%d: %d-elements;%d-edges"%(v_id, len(grid.get_vertex_elements(v_id)), len(grid.get_vertex_edges(v_id))))
 
     # рисуем сетку
     fig, beforeNone = plt.subplots()
@@ -40,8 +48,10 @@ def main():
     fig2, beforeQuad = plt.subplots()
 
     data_functions.draw_grid(grid, beforeNone)
-    data_functions.draw_function_on_grid(grid, lambda x, y : x + y, beforeLin)
-    data_functions.draw_function_on_grid(grid, lambda x, y : (x ** 2 + y ** 2) ** 0.5, beforeQuad)
+    grid.set_grid_function(lambda x, y : x + y)
+    data_functions.draw_function_on_grid(grid, beforeLin)
+    grid.set_grid_function(lambda x, y : (x ** 2 + y ** 2) ** 0.5)
+    data_functions.draw_function_on_grid(grid, beforeQuad)
 
     data_functions.random_grid_translation(grid)
 
@@ -50,8 +60,10 @@ def main():
     fig5, afterQuad = plt.subplots()
 
     data_functions.draw_grid(grid, afterNone)
-    data_functions.draw_function_on_grid(grid, lambda x, y : x + y, afterLin)
-    data_functions.draw_function_on_grid(grid, lambda x, y : (x ** 2 + y ** 2) ** 0.5, afterQuad)
+    grid.set_grid_function(lambda x, y : x + y)
+    data_functions.draw_function_on_grid(grid, afterLin)
+    grid.set_grid_function(lambda x, y : (x ** 2 + y ** 2) ** 0.5)
+    data_functions.draw_function_on_grid(grid, afterQuad)
 
     plt.show()
 

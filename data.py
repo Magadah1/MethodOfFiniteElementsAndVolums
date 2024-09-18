@@ -30,8 +30,8 @@ class Edge:
     def __init__(self, v1 : int = -1, v2 : int = -1):
         self.v1 = v1
         self.v2 = v2
-        self.cell_left = -1
-        self.cell_right = -1
+        self.element_left = -1
+        self.element_right = -1
 
 
     def length(self, vertices : list[Vertex]):
@@ -52,7 +52,7 @@ class Edge:
         x = vertices[self.v2].x - vertices[self.v1].x
         y = vertices[self.v2].y - vertices[self.v1].y
         l = math.sqrt(x ** 2 + y ** 2)
-        if l < 1e-6:
+        if l < 1e-9:
             return None
         x /= l
         y /= l
@@ -168,12 +168,14 @@ class GridType(Enum):
 class Grid:
     """
     Определяет структуру сетки.
-    Содержит общий массив вершин и тип их расположения.
+    Содержит общий массив вершин и тип их расположения. А также массив значений некоторой функции в них.
     Содержит массив рёбер.
     Содержит массив элементов, состоящих из хранящихся в сетке вершин и их общий тип.
     """
     def __init__(self, grid_type : GridType = GridType.RECTANGULAR, elements_type : ElementsType = ElementsType.TRIANGLE):
         self.vertices = list[Vertex]()
+        self.function_values = list[float]()
+        self.function = None
         self.elements = list[Element]()
         self.edges = list[Edge]()
         self.grid_type = grid_type
@@ -212,3 +214,21 @@ class Grid:
                 elements.append(el_id)
 
         return elements
+
+
+    def set_grid_function(self, f):
+        """
+        Устанавливает функцию, действующую на функцию
+        """
+        self.function = f
+
+
+    def calculate_function_on_grid(self):
+        """
+        Вычисляет значения заданной функции на сетке.
+        """
+        self.function_values.clear()
+        if self.function is None:
+            return
+        for vert in self.vertices:
+            self.function_values.append(self.function(vert.x, vert.y))
