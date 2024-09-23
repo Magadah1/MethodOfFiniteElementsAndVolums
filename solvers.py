@@ -31,13 +31,12 @@ def solve_grid_deformation(grid : data.Grid):
         X[i] = 0
         Y[i] = 0
         for j in range(len(grid.vertices)):
-            XY[i, j] = -1
+            XY[i, j] = 0
 
     # пишем функционал для каждой Вершины
     for ver_id in range(len(grid.vertices)): # ver_id - номер текущей Вершины
         if grid.vertices[ver_id].is_at_boarder: # если Вершина на границе, то она не будет подвергнута смещению
-            for z in range(len(grid.vertices)):
-                XY[ver_id, z] = int(ver_id == z)
+            XY[ver_id, ver_id] = 1
             X[ver_id] = grid.vertices[ver_id].x
             Y[ver_id] = grid.vertices[ver_id].y
             continue
@@ -50,16 +49,18 @@ def solve_grid_deformation(grid : data.Grid):
                 v_id = edge.v2 # номер другой Вершины
                 v = grid.vertices[v_id]
                 if v.is_at_boarder: # если она на границе,
-                    XY[ver_id, v_id] = 0 # то в XY для нашей Вершины там будет '0',
-                    X[ver_id] -= v.x # в X для нашей Вершины суммируется координата
-                    Y[ver_id] -= v.y # (аналогично в Y).
+                    X[ver_id] += v.x # в X для нашей Вершины суммируется координата
+                    Y[ver_id] += v.y # (аналогично в Y).
+                else:
+                    XY[ver_id, v_id] = -1
             elif edge.v2 == ver_id:
                 v_id = edge.v1 # номер другой Вершины
                 v = grid.vertices[v_id]
                 if v.is_at_boarder: # если она на границе,
-                    XY[ver_id, v_id] = 0 # то в XY для нашей Вершины там будет '0',
-                    X[ver_id] -= v.x # в X для нашей Вершины суммируется координата
-                    Y[ver_id] -= v.y # (аналогично в Y).
+                    X[ver_id] += v.x # в X для нашей Вершины суммируется координата
+                    Y[ver_id] += v.y # (аналогично в Y).
+                else:
+                    XY[ver_id, v_id] = -1
 
     # решаем получившуюся матрицу и обновляем значения координат Вершин Сетки
     solver = pyamg.smoothed_aggregation_solver(XY)
