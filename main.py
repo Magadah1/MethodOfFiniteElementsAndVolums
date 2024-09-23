@@ -1,18 +1,17 @@
-import numpy as np
-import pyamg
 import matplotlib.pyplot as plt
 
 import data_functions
+import solvers
 
 
 def main():
     # криво решаем матрицу через pyamg
-    A = pyamg.gallery.poisson((1,3), format='csr')
+    A = solvers.pyamg.gallery.poisson((1,3), format='csr')
     for i in range(3):
         for j in range(3):
             A[i, j] = i == j
-    m1 = pyamg.smoothed_aggregation_solver(A)
-    b = np.random.rand(3)
+    m1 = solvers.pyamg.smoothed_aggregation_solver(A)
+    b = solvers.np.random.rand(3)
     for i in range(3):
         b[i] = 1
     print(b)
@@ -53,7 +52,7 @@ def main():
     grid.set_grid_function(lambda x, y : (x ** 2 + y ** 2) ** 0.5)
     data_functions.draw_function_on_grid(grid, beforeQuad)
 
-    data_functions.random_grid_translation(grid)
+    solvers.solve_grid_deformation(grid)
 
     fig3, afterNone = plt.subplots()
     fig4, afterLin = plt.subplots()

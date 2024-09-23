@@ -200,7 +200,7 @@ class Grid:
         """
         edges = []
         for edge_id, edge in enumerate(self.edges):
-            if edge.v1 == v_id or edge.v1 == v_id:
+            if edge.v1 == v_id or edge.v2 == v_id:
                 edges.append(edge_id)
 
         return edges

@@ -27,3 +27,4 @@ def triangle_form(vl : data.Vertex, vm : data.Vertex, vn : data.Vertex, v : data
     Fn_area = get_triangle_area_made_by_vertices(vl, vm, v)
 
     return (Fl * Fl_area + Fm * Fm_area + Fn * Fn_area) / area
+
