@@ -21,6 +21,13 @@ def get_angle_between_vectors_in_degrees(v1 : data.Vertex, v2 : data.Vertex):
     return angle_in_radians * 180 / math.pi
 
 
+def is_vertex_at_boarder(i, j, m, n):
+    """
+    Определяет, находится ли Вершина с двумерным индексом (i, j) на границе сетки размеров (m+1, n+1)
+    """
+    return i == 0 or j == 0 or i == m or j == n
+
+
 def make_rectangular_grid_of_unconnected_vertices(Lx : float, Ly : float, Nx : int, Ny : int):
     """
     Создаёт прямоугольную сетку из вершин в нужном количестве и с нужными шагами.
@@ -33,7 +40,9 @@ def make_rectangular_grid_of_unconnected_vertices(Lx : float, Ly : float, Nx : i
     # послойно заполняем матрицу послойно по y
     for iy in range(0, Ny + 1):
         for ix in range(0, Nx + 1):
-            vertices.append(data.Vertex(x = 0 + hx * ix, y = 0 + hy * iy))
+            vertices.append(data.Vertex(x = 0 + hx * ix,
+                                        y = 0 + hy * iy,
+                                        is_at_boarder = is_vertex_at_boarder(ix, iy, Nx, Ny)))
 
     return vertices
 
@@ -53,7 +62,8 @@ def make_radial_grid_of_unconnected_vertices(Ir : float, Or : float, Nr : int, N
     for ir in range(0, Nr + 1):
         for ifi in range(0, NFi + 1):
             vertices.append(data.Vertex(x = (Ir + hr * ir) * math.cos(start_angle - ifi * hfi),
-                                        y = (Ir + hr * ir) * math.sin(start_angle - ifi * hfi)))
+                                        y = (Ir + hr * ir) * math.sin(start_angle - ifi * hfi),
+                                        is_at_boarder = is_vertex_at_boarder(ir, ifi, Nr, NFi)))
 
     return vertices
 

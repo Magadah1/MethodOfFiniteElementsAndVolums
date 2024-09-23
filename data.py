@@ -15,11 +15,14 @@ class Material:
 class Vertex:
     """
     Определяет координаты вершины на плоскости.
+    Хранит номер одного из Рёбер, которому принадлежит.
+    Хранит информацию о том, является ли граничной.
     TODO: добавить информацию о принадлежности ГУ
     """
-    def __init__(self, x : float = 0, y : float = 0):
+    def __init__(self, x : float = 0, y : float = 0, is_at_boarder : bool = False):
         self.x = x
         self.y = y
+        self.is_at_boarder = is_at_boarder
         self.edge_id = -1
 
 
@@ -197,7 +200,7 @@ class Grid:
         """
         edges = []
         for edge_id, edge in enumerate(self.edges):
-            if edge.v1 == v_id or edge.v1 == v_id:
+            if edge.v1 == v_id or edge.v2 == v_id:
                 edges.append(edge_id)
 
         return edges
