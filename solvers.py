@@ -41,10 +41,10 @@ def solve_grid_deformation(grid : data.Grid):
             Y[ver_id] = grid.vertices[ver_id].y
             continue
 
-        edges_ids = grid.get_vertex_edges(ver_id) # берём индексы всех рёбер, в которых одна из Вершин - текущая, не граничная
+        edges_ids = grid.get_vertex_edges(ver_id) # берём индексы всех Рёбер, в которых одна из Вершин - текущая, не граничная
         XY[ver_id, ver_id] = len(edges_ids)
         for edge_id in edges_ids:
-            edge = grid.edges[edge_id] # ребро, одна из Вершин которого - текущая
+            edge = grid.edges[edge_id] # Ребро, одна из Вершин которого - текущая
             if edge.v1 == ver_id:
                 v_id = edge.v2 # номер другой Вершины
                 v = grid.vertices[v_id]

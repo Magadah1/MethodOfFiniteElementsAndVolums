@@ -41,7 +41,7 @@ def main():
     for v_id in range(len(grid.vertices)):
         print("around v%d: %d-elements;%d-edges"%(v_id, len(grid.get_vertex_elements(v_id)), len(grid.get_vertex_edges(v_id))))
 
-    # рисуем сетку
+    # рисуем Сетку
     data_functions.random_grid_translation(grid)
     fig, beforeNone = plt.subplots()
     fig1, beforeLin = plt.subplots()
