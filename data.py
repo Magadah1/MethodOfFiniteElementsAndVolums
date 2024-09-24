@@ -329,7 +329,7 @@ class Grid:
                 break
             else:
                 median_element.vertices.append(centers_of_vertex_elements[next_el_id])
-                median_element.edges.append(MedianEdge(
+                median_element.edges.append(MedianEdge( # 3
                     len(median_element.vertices) - 2,
                     len(median_element.vertices) - 1,
                     next_vertex_id_in_median_edge
@@ -347,3 +347,86 @@ class Grid:
         Возвращает для заданной граничной Вершины её Медианный Элемент.
         """
         pass
+
+
+    def get_vertex_mean_median_element(self, v_id):
+        """
+        Возвращает для заданной Вершины её Средне Медианный Элемент.
+        """
+        if self.vertices[v_id].is_at_boarder:
+            return self.get_vertex_mean_median_element_at_boarder(v_id)
+        else:
+            return self.get_vertex_mean_median_element_not_at_boarder(v_id)
+
+
+    @private
+    def get_vertex_mean_median_element_not_at_boarder(self, v_id):
+        """
+        Возвращает для заданной неграничной Вершины её Средне Медианный Элемент.
+        """
+        vertex_elements_ids = self.get_vertex_elements(v_id)
+        centers_of_vertex_elements = [self.elements[el_id].get_center(self.vertices) for el_id in vertex_elements_ids]
+
+        # Принцип алгоритма такой:
+        # 1. Берём произвольный Элемент у Вершины в качестве опорного.
+        # 2. Для него ищем один из следующих соседних Элементов из массива vertex_elements_ids, который ещё не использовался.
+        # 3. По ним получаем первые Средне Медианные Рёбра, для которых определим номер следующей (соседней) Вершины исходной сетки.
+        # 4. В качестве опорного элемента выбираем номер Элемента из п.2. и повторяем п. 2 - 4 до тех пор, пока опять не возьмём Элемент из п. 1.
+        # В итоге получим Средне Медианный Элемент, Вершины которого расположены в определённом, но произвольном, обходе.
+
+        mean_median_element = MedianElement()
+        mean_median_element.vertices.append(centers_of_vertex_elements[vertex_elements_ids[0]])
+        pivot_el_id = vertex_elements_ids[0]
+        prev_el_id = -1
+
+        while True:  # питонячий аналог Do While
+            cur_el = self.elements[pivot_el_id]  # 1
+            next_el_id = -1
+            next_vertex_id_in_mean_median_edge = -1
+            middle_vertex = None
+            for cur_el_edge_id in cur_el.edges_ids:
+                cur_el_edge = self.edges[cur_el_edge_id]
+                possible_next_el_id = cur_el_edge.element_left if cur_el_edge.element_right == pivot_el_id else cur_el_edge.element_right
+                if possible_next_el_id != prev_el_id and possible_next_el_id in vertex_elements_ids:  # 2
+                    next_el_id = possible_next_el_id
+                    next_vertex_id_in_mean_median_edge = cur_el_edge.v1 if cur_el_edge.v2 == v_id else cur_el_edge.v2
+                    middle_vertex = cur_el_edge.get_center(self.vertices)
+                    break
+
+            if next_el_id == vertex_elements_ids[0]:
+                mean_median_element.vertices.append(middle_vertex)
+                mean_median_element.edges.append(MedianEdge(
+                    len(mean_median_element.vertices) - 2,
+                    len(mean_median_element.vertices) - 1,
+                    next_vertex_id_in_mean_median_edge
+                ))
+                mean_median_element.edges.append(MedianEdge(
+                    len(mean_median_element.vertices) - 1,
+                    0,
+                    next_vertex_id_in_mean_median_edge
+                ))
+                break
+            else:
+                mean_median_element.vertices.append(middle_vertex)
+                mean_median_element.edges.append(MedianEdge(
+                    len(mean_median_element.vertices) - 2,
+                    len(mean_median_element.vertices) - 1,
+                    next_vertex_id_in_mean_median_edge
+                ))
+                mean_median_element.vertices.append(centers_of_vertex_elements[next_el_id])
+                mean_median_element.edges.append(MedianEdge(
+                    len(mean_median_element.vertices) - 2,
+                    len(mean_median_element.vertices) - 1,
+                    next_vertex_id_in_mean_median_edge
+                ))
+                prev_el_id = pivot_el_id  # 4
+                pivot_el_id = next_el_id
+
+        return mean_median_element
+
+
+    @private
+    def get_vertex_mean_median_element_at_boarder(self, v_id):
+        """
+        Возвращает для заданной граничной Вершины её Средне Медианный Элемент.
+        """
