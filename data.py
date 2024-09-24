@@ -61,6 +61,29 @@ class Edge:
         return Vertex(-y, x) # возвращается "Вершина", которую нужно считать как вектор.
 
 
+    def get_center(self, vertices : list[Vertex]):
+        """
+        Возвращает центр Ребра.
+        Из-за специфики хранения данных требует массив Вершин, из 2х из которых состоит Ребро.
+        """
+        v1 = vertices[self.v1]
+        v2 = vertices[self.v2]
+
+        return Vertex((v1.x + v2.x) / 2, (v1.y + v2.y) / 2)
+
+
+class MedianEdge:
+    """
+    Определяет структуру Медианного Ребра, получаемого в результате (средне)медианного разбиения.
+    Явно хранит индексы на свои Вершины и номер соседней Вершины исходной сетки.
+    !! Индексы на свои Вершины валидны лишь в пределах Медианного Элемента. !!
+    """
+    def __init__(self, v1 : int, v2 : int, next_vertex : int):
+        self.v1 = v1
+        self.v2 = v2
+        self.next_vertex = next_vertex
+
+
 class Element:
     """
     Определяет структуру произвольного Элемента.
@@ -91,6 +114,17 @@ class Element:
         center.y /= l
 
         return center
+
+
+    def __and__(self, other):
+        """
+        Перегружает оператор "&". Возвращает индекс общего Ребра двух Элементов. Если нет общего Ребра - возвращает None.
+        """
+        for edge_id in self.edges_ids:
+            if edge_id in other.edges_ids:
+                return edge_id
+
+        return None
 
 
     def get_area(self, vertices : list[Vertex]):
@@ -149,6 +183,17 @@ class Element:
                                                         vertices))
 
 
+class MedianElement:
+    """
+    Определяет структуру Медианного Элемента, получаемого в результате (средне)медианного разбиения.
+    Хранит массивы Вершин и Рёбер, из которых состоит.
+    !! Вершины расположены в определённом обходе, но (по крайней мере пока что) сам обход неоднозначен. !!
+    """
+    def __init__(self):
+        self.vertices = list[Vertex]()
+        self.edges = list[MedianEdge]()
+
+
 class ElementsType(Enum):
     """
     Определяет тип Элементов сетки.
@@ -180,6 +225,24 @@ class Grid:
         self.edges = list[Edge]()
         self.grid_type = grid_type
         self.elements_type = elements_type
+
+
+    def set_grid_function(self, f):
+        """
+        Устанавливает функцию, действующую на Сетку.
+        """
+        self.function = f
+
+
+    def calculate_function_on_grid(self):
+        """
+        Вычисляет значения заданной функции на Сетке.
+        """
+        self.function_values.clear()
+        if self.function is None:
+            return
+        for vert in self.vertices:
+            self.function_values.append(self.function(vert.x, vert.y))
 
 
     def get_area(self):
@@ -215,19 +278,72 @@ class Grid:
         return elements
 
 
-    def set_grid_function(self, f):
+    def get_vertex_median_element(self, v_id):
         """
-        Устанавливает функцию, действующую на Сетку.
+        Возвращает для заданной Вершины её Медианный Элемент.
         """
-        self.function = f
+        if self.vertices[v_id].is_at_boarder:
+            return self.get_vertex_median_element_at_boarder(v_id)
+        else:
+            return self.get_vertex_median_element_not_at_boarder(v_id)
 
 
-    def calculate_function_on_grid(self):
+    @private
+    def get_vertex_median_element_not_at_boarder(self, v_id):
         """
-        Вычисляет значения заданной функции на Сетке.
+        Возвращает для заданной неграничной Вершины её Медианный Элемент.
         """
-        self.function_values.clear()
-        if self.function is None:
-            return
-        for vert in self.vertices:
-            self.function_values.append(self.function(vert.x, vert.y))
+        vertex_elements_ids = self.get_vertex_elements(v_id)
+        centers_of_vertex_elements = [self.elements[el_id].get_center(self.vertices) for el_id in vertex_elements_ids]
+
+        # Принцип алгоритма такой:
+        # 1. Берём произвольный Элемент у Вершины в качестве опорного.
+        # 2. Для него ищем один из следующих соседних Элементов из массива vertex_elements_ids, который ещё не использовался.
+        # 3. По ним получаем первое Медианное Ребро, для которого определим номер следующей (соседней) Вершины исходной сетки.
+        # 4. В качестве опорного элемента выбираем номер Элемента из п.2. и повторяем п. 2 - 4 до тех пор, пока опять не возьмём Элемент из п. 1.
+        # В итоге получим Медианный Элемент, Вершины которого расположены в определённом, но произвольном, обходе.
+
+        median_element = MedianElement()
+        median_element.vertices.append(centers_of_vertex_elements[vertex_elements_ids[0]])
+        pivot_el_id = vertex_elements_ids[0]
+        prev_el_id = -1
+
+        while True: # питонячий аналог Do While
+            cur_el = self.elements[pivot_el_id] # 1
+            next_el_id = -1
+            next_vertex_id_in_median_edge = -1
+            for cur_el_edge_id in cur_el.edges_ids:
+                cur_el_edge = self.edges[cur_el_edge_id]
+                possible_next_el_id = cur_el_edge.element_left if cur_el_edge.element_right == pivot_el_id else cur_el_edge.element_right
+                if possible_next_el_id != prev_el_id and possible_next_el_id in vertex_elements_ids: # 2
+                    next_el_id = possible_next_el_id
+                    next_vertex_id_in_median_edge = cur_el_edge.v1 if cur_el_edge.v2 == v_id else cur_el_edge.v2
+                    break
+
+            if next_el_id == vertex_elements_ids[0]:
+                median_element.edges.append(MedianEdge(
+                    len(median_element.vertices) - 1,
+                    0,
+                    next_vertex_id_in_median_edge
+                ))
+                break
+            else:
+                median_element.vertices.append(centers_of_vertex_elements[next_el_id])
+                median_element.edges.append(MedianEdge(
+                    len(median_element.vertices) - 2,
+                    len(median_element.vertices) - 1,
+                    next_vertex_id_in_median_edge
+                ))
+                prev_el_id = pivot_el_id # 4
+                pivot_el_id = next_el_id
+
+
+        return median_element
+
+
+    @private
+    def get_vertex_median_element_at_boarder(self, v_id):
+        """
+        Возвращает для заданной граничной Вершины её Медианный Элемент.
+        """
+        pass
