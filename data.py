@@ -2,7 +2,6 @@ import math
 
 from enum import Enum
 from accessify import private
-from pyparsing import White
 
 
 class Material:
@@ -516,3 +515,101 @@ class Grid:
         """
         Возвращает для заданной граничной Вершины её Средне Медианный Элемент.
         """
+        vertex_elements_ids = self.get_vertex_elements(v_id)
+        vertex_edges_ids = self.get_vertex_edges(v_id)
+
+        # Принцип алгоритма такой:
+        # 1. Находим одно из граничных Рёбер, которому принадлежит стартовая Вершина. К его середине пойдёт первое Средне Медианное Ребро.
+        # 2. Находим Элемент, которому принадлежит Ребро из п.1., и добавим второе Средне Медианное Ребро.
+        # 3. Применим адаптированный в данном случае алгоритм для неграничных Вершин.
+        # 4. Найдём оставшееся граничное Ребро и добавим последние Средне Медианные Рёбра, через его середину.
+        # Средне Медианные Рёбра из п.1. и п.4. (и те Средне Медианные Рёбра, которые отходят от их центров к центрам их Элементов)
+        # в качестве следующей (соседней) Вершины будут иметь оставшиеся Вершины, составляющие эти Рёбра.
+
+        mean_median_element = MedianElement()
+        mean_median_element.vertices.append(self.vertices[v_id])
+
+        first_boarder_edge_id = -1
+        for vertex_edges_id in vertex_edges_ids:
+            edge = self.edges[vertex_edges_id]
+            if (edge.v1 == v_id and self.vertices[edge.v2].is_at_boarder
+                    or edge.v2 == v_id and self.vertices[edge.v1].is_at_boarder):  # 1
+                first_boarder_edge_id = vertex_edges_id
+                break
+
+        first_boarder_edge = self.edges[first_boarder_edge_id]
+        mean_median_element.vertices.append(self.edges[first_boarder_edge_id].get_center(self.vertices))
+        mean_median_element.edges.append(MedianEdge(
+            0, 1,
+            first_boarder_edge.v1 if first_boarder_edge.v2 == v_id else first_boarder_edge.v2
+        ))  # добавил Медианное Ребро, равное половине случайного граничного Ребра, которому принадлежит заданная Вершина
+
+        pivot_el_id = -1
+        for vertex_elements_id in vertex_elements_ids:
+            element = self.elements[vertex_elements_id]
+            if first_boarder_edge_id in element.edges_ids:  # 2
+                pivot_el_id = vertex_elements_id
+                break
+
+        mean_median_element.vertices.append(self.elements[pivot_el_id].get_center(self.vertices))
+        mean_median_element.edges.append(MedianEdge(
+            1, 2,
+            first_boarder_edge.v1 if first_boarder_edge.v2 == v_id else first_boarder_edge.v2
+        ))
+
+        prev_el_id = -1
+
+        while True:  # 3
+            cur_el = self.elements[pivot_el_id]
+            next_el_id = -1
+            next_vertex_id_in_median_edge = -1
+            middle_vertex = None
+            for cur_el_edge_id in cur_el.edges_ids:
+                cur_el_edge = self.edges[cur_el_edge_id]
+                possible_next_el_id = cur_el_edge.element_left if cur_el_edge.element_right == pivot_el_id else cur_el_edge.element_right
+                if possible_next_el_id != prev_el_id and possible_next_el_id in vertex_elements_ids:
+                    next_el_id = possible_next_el_id
+                    next_vertex_id_in_median_edge = cur_el_edge.v1 if cur_el_edge.v2 == v_id else cur_el_edge.v2
+                    middle_vertex = cur_el_edge.get_center(self.vertices)
+                    break
+
+            if next_el_id == -1:  # 4
+                last_boarder_edge_id = -1
+                for vertex_edges_id in vertex_edges_ids:
+                    edge = self.edges[vertex_edges_id]
+                    if vertex_edges_id != first_boarder_edge_id and (
+                            edge.v1 == v_id and self.vertices[edge.v2].is_at_boarder
+                            or edge.v2 == v_id and self.vertices[edge.v1]):
+                        last_boarder_edge_id = vertex_edges_id
+                        break
+
+                last_boarder_edge = self.edges[last_boarder_edge_id]
+                mean_median_element.vertices.append(self.edges[last_boarder_edge_id].get_center(self.vertices))
+                mean_median_element.edges.append(MedianEdge(
+                    len(mean_median_element.vertices) - 2,
+                    len(mean_median_element.vertices) - 1,
+                    last_boarder_edge.v1 if last_boarder_edge.v2 == v_id else last_boarder_edge.v2
+                ))
+                mean_median_element.edges.append(MedianEdge(
+                    len(mean_median_element.vertices) - 1,
+                    0,
+                    last_boarder_edge.v1 if last_boarder_edge.v2 == v_id else last_boarder_edge.v2
+                ))
+                break
+            else:
+                mean_median_element.vertices.append(middle_vertex)
+                mean_median_element.edges.append(MedianEdge(
+                    len(mean_median_element.vertices) - 2,
+                    len(mean_median_element.vertices) - 1,
+                    next_vertex_id_in_median_edge
+                ))
+                mean_median_element.vertices.append(self.elements[next_el_id].get_center(self.vertices))
+                mean_median_element.edges.append(MedianEdge(
+                    len(mean_median_element.vertices) - 2,
+                    len(mean_median_element.vertices) - 1,
+                    next_vertex_id_in_median_edge
+                ))
+                prev_el_id = pivot_el_id
+                pivot_el_id = next_el_id
+
+        return mean_median_element
