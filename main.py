@@ -65,6 +65,9 @@ def main():
     grid.set_grid_function(lambda x, y : (x ** 2 + y ** 2) ** 0.5)
     data_functions.draw_function_on_grid(grid, afterQuad)
 
+    fig6, path = plt.subplots()
+    data_functions.draw_grid_path(grid, path, plt)
+
     plt.show()
 
 
