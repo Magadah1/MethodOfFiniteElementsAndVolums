@@ -144,27 +144,36 @@ def make_vertices_indices_like_rectangular_or_triangle_for_elements_of_grid(laye
     return elements
 
 
-def fill_vertices_in_edges_in_grid_of_triangle(layer_size : int, column_size : int):
+def fill_vertices_in_edges_in_grid(grid : data.Grid, layer_size : int, column_size : int):
     """
-    Заполняет Вершины, из которых состоит Ребро. Элементы представляют собой Треугольники.
+    Заполняет Вершины, из которых состоит Ребро. Элементы представляют собой как Треугольники, так и Прямоугольники.
     Отдельно обрабатывает "верхний" и "правый" слои.
     """
     edges = list[data.Edge]()
 
-    for iy in range(0, column_size):
-        for ix in range(0, layer_size):
-            edges.append(data.Edge(
-                v1 = convert_2d_matrix_indices_to_1d_matrix_index(iy, ix, layer_size),
-                v2 = convert_2d_matrix_indices_to_1d_matrix_index(iy, ix + 1, layer_size)
+    # Тут алгоритм отличается от "явных" выше.
+    # В каждом Элементе самый маленький индекс одной из его Вершин обозначает самую "левую нижнюю" Вершину.
+    # Будет исходить из её положения и типа Элемента
+    el_id = 0
+    max_el_id = len(grid.elements)
+    while el_id < max_el_id:
+        element = grid.elements[el_id]
+        l_d_vert_id = min(element.vertices_ids) # вообще говоря тут будет корректно и l_d_vertex = element.vertices_ids[0]
+        edges.append(data.Edge( # ребро "вправо"
+            v1 = l_d_vert_id,
+            v2 = l_d_vert_id + 1
+        ))
+        edges.append(data.Edge(  # ребро "вверх"
+            v1  = l_d_vert_id,
+            v2 =l_d_vert_id + layer_size + 1
+        ))
+        if element.type == data.ElementType.TRIANGLE: # у треугольника добавляется ребро
+            edges.append(data.Edge(  # ребро "вправо вверх"
+                v1=l_d_vert_id,
+                v2=l_d_vert_id + layer_size + 2
             ))
-            edges.append(data.Edge(
-                v1 = convert_2d_matrix_indices_to_1d_matrix_index(iy, ix, layer_size),
-                v2 = convert_2d_matrix_indices_to_1d_matrix_index(iy + 1, ix, layer_size)
-            ))
-            edges.append(data.Edge(
-                v1 = convert_2d_matrix_indices_to_1d_matrix_index(iy, ix, layer_size),
-                v2 = convert_2d_matrix_indices_to_1d_matrix_index(iy + 1, ix + 1, layer_size)
-            ))
+            el_id += 1
+        el_id += 1
 
     for ix in range(0, layer_size):
         edges.append(data.Edge(
@@ -178,40 +187,7 @@ def fill_vertices_in_edges_in_grid_of_triangle(layer_size : int, column_size : i
             v2 = convert_2d_matrix_indices_to_1d_matrix_index(iy + 1, layer_size, layer_size)
         ))
 
-    return edges
-
-
-def fill_vertices_in_edges_in_grid_of_rectangle(layer_size : int, column_size : int):
-    """
-    Заполняет Вершины, из которых состоит Ребро. Элементы представляют собой Прямоугольники.
-    Отдельно обрабатывает "верхний" слой.
-    """
-    edges = list[data.Edge]()
-
-    for iy in range(0, column_size):
-        for ix in range(0, layer_size):
-            edges.append(data.Edge(
-                v1 = convert_2d_matrix_indices_to_1d_matrix_index(iy, ix, layer_size),
-                v2 = convert_2d_matrix_indices_to_1d_matrix_index(iy, ix + 1, layer_size)
-            ))
-            edges.append(data.Edge(
-                v1 = convert_2d_matrix_indices_to_1d_matrix_index(iy, ix, layer_size),
-                v2 = convert_2d_matrix_indices_to_1d_matrix_index(iy + 1, ix, layer_size)
-            ))
-
-    for ix in range(0, layer_size):
-        edges.append(data.Edge(
-            v1 = convert_2d_matrix_indices_to_1d_matrix_index(column_size, ix, layer_size),
-            v2 = convert_2d_matrix_indices_to_1d_matrix_index(column_size, ix + 1, layer_size)
-        ))
-
-    for iy in range(0, column_size):
-        edges.append(data.Edge(
-            v1 = convert_2d_matrix_indices_to_1d_matrix_index(iy, layer_size, layer_size),
-            v2 = convert_2d_matrix_indices_to_1d_matrix_index(iy + 1, layer_size, layer_size)
-        ))
-
-    return edges
+    grid.edges = edges
 
 
 def fill_edges_in_element(element : data.Element, grid : data.Grid):
@@ -317,7 +293,7 @@ def make_grid():
             if Element_Type == data.ElementType.TRIANGLE.value:
                 print("Генерируется прямоугольная Сетка с Элементами типа Треугольник")
                 grid.elements = make_vertices_indices_like_triangle_for_elements_of_grid(Nx, Ny)
-                grid.edges = fill_vertices_in_edges_in_grid_of_triangle(Nx, Ny)
+                fill_vertices_in_edges_in_grid(grid, Nx, Ny)
                 fill_edges_in_elements(grid)
                 fill_elements_in_edges(grid)
                 return grid
@@ -325,7 +301,7 @@ def make_grid():
             if Element_Type == data.ElementType.RECTANGLE.value:
                 print("Генерируется прямоугольная Сетка с Элементами типа Прямоугольник")
                 grid.elements = make_vertices_indices_like_rectangular_for_elements_of_grid(Nx, Ny)
-                grid.edges = fill_vertices_in_edges_in_grid_of_rectangle(Nx, Ny)
+                fill_vertices_in_edges_in_grid(grid, Nx, Ny)
                 fill_edges_in_elements(grid)
                 fill_elements_in_edges(grid)
                 return grid
@@ -333,7 +309,7 @@ def make_grid():
             if Element_Type == data.ElementType.RANDOM.value:
                 print("Генерируется прямоугольная Сетка с Элементами произвольных типов")
                 grid.elements = make_vertices_indices_like_rectangular_or_triangle_for_elements_of_grid(Nx, Ny)
-                grid.edges = fill_vertices_in_edges_in_grid_of_rectangle(Nx, Ny)
+                fill_vertices_in_edges_in_grid(grid, Nx, Ny)
                 fill_edges_in_elements(grid)
                 fill_elements_in_edges(grid)
                 return grid
@@ -346,7 +322,7 @@ def make_grid():
             return None
 
     elif Grid_Type == data.GridType.RADIAL.value:
-        print("Введите данные Сетки в следующем формате: Ir, Or, Nr, NFi, Element_Type(0 - TRIANGLE, 1 - RECTANGLE).")
+        print("Введите данные Сетки в следующем формате: Ir, Or, Nr, NFi, Element_Type(0 - TRIANGLE, 1 - RECTANGLE, 2 - RANDOM).")
         try:
             Ir, Or, Nr, NFi, Element_Type = [float(s) for s in input().split()]
 
@@ -366,7 +342,7 @@ def make_grid():
             if Element_Type == data.ElementType.TRIANGLE.value:
                 print("Генерируется радиальная Сетка с Элементами типа Треугольник")
                 grid.elements = make_vertices_indices_like_triangle_for_elements_of_grid(NFi, Nr)
-                grid.edges = fill_vertices_in_edges_in_grid_of_triangle(NFi, Nr)
+                fill_vertices_in_edges_in_grid(grid, NFi, Nr)
                 fill_edges_in_elements(grid)
                 fill_elements_in_edges(grid)
                 return grid
@@ -374,7 +350,7 @@ def make_grid():
             if Element_Type == data.ElementType.RECTANGLE.value:
                 print("Генерируется радиальная Сетка с Элементами типа Прямоугольник")
                 grid.elements = make_vertices_indices_like_rectangular_for_elements_of_grid(NFi, Nr)
-                grid.edges = fill_vertices_in_edges_in_grid_of_rectangle(NFi, Nr)
+                fill_vertices_in_edges_in_grid(grid, NFi, Nr)
                 fill_edges_in_elements(grid)
                 fill_elements_in_edges(grid)
                 return grid
@@ -382,7 +358,7 @@ def make_grid():
             if Element_Type == data.ElementType.RANDOM.value:
                 print("Генерируется радиальная Сетка с Элементами произвольных типов")
                 grid.elements = make_vertices_indices_like_rectangular_or_triangle_for_elements_of_grid(NFi, Nr)
-                grid.edges = fill_vertices_in_edges_in_grid_of_rectangle(NFi, Nr)
+                fill_vertices_in_edges_in_grid(grid, NFi, Nr)
                 fill_edges_in_elements(grid)
                 fill_elements_in_edges(grid)
                 return grid
@@ -445,7 +421,73 @@ def draw_function_on_grid(grid : data.Grid, ax):
     ax.tripcolor(x, y, grid.function_values, triangles=triangles)
 
 
-def draw_grid_path(grid : data.Grid, ax, plt):
+def draw_grid_median_path(grid : data.Grid, ax, plt):
+    """
+    Отрисовывает Медианные Элементы Сетки.
+    """
+    median_elements = list[data.MedianElement]()
+
+    for vert_id in range(len(grid.vertices)):
+        median_elements.append(grid.get_vertex_median_element(vert_id))
+
+    min_x = 1e9
+    max_x = -1e9
+    min_y = 1e9
+    max_y = -1e9
+
+    polygons = list[Polygon]()
+
+    for median_element in median_elements:
+        median_element_vertices = []
+        for vert in median_element.vertices:
+            min_x = min(min_x, vert.x)
+            min_y = min(min_y, vert.y)
+            max_x = max(max_x, vert.x)
+            max_y = max(max_y, vert.y)
+            median_element_vertices.append((vert.x, vert.y))
+        polygons.append(Polygon(median_element_vertices, fill=False, color='r'))
+
+    for polygon in polygons:
+        ax.add_patch(polygon)
+
+    plt.xlim(min_x * 1.1, max_x * 1.1)
+    plt.ylim(min_y * 1.1, max_y * 1.1)
+
+
+def draw_grid_mean_median_path(grid : data.Grid, ax, plt):
+    """
+    Отрисовывает Средне Медианные Элементы Сетки.
+    """
+    mean_median_elements = list[data.MedianElement]()
+
+    for vert_id in range(len(grid.vertices)):
+        mean_median_elements.append(grid.get_vertex_mean_median_element(vert_id))
+
+    min_x = 1e9
+    max_x = -1e9
+    min_y = 1e9
+    max_y = -1e9
+
+    polygons = list[Polygon]()
+
+    for median_element in mean_median_elements:
+        median_element_vertices = []
+        for vert in median_element.vertices:
+            min_x = min(min_x, vert.x)
+            min_y = min(min_y, vert.y)
+            max_x = max(max_x, vert.x)
+            max_y = max(max_y, vert.y)
+            median_element_vertices.append((vert.x, vert.y))
+        polygons.append(Polygon(median_element_vertices, fill=False, color='g'))
+
+    for polygon in polygons:
+        ax.add_patch(polygon)
+
+    plt.xlim(min_x * 1.1, max_x * 1.1)
+    plt.ylim(min_y * 1.1, max_y * 1.1)
+
+
+def draw_grid_path(grid: data.Grid, ax, plt, additional_option = 0):
     """
     Отрисовывает Сетку контурно.
     """
@@ -458,13 +500,21 @@ def draw_grid_path(grid : data.Grid, ax, plt):
         for el_ver_id in element.vertices_ids:
             vert = grid.vertices[el_ver_id]
             element_vertices.append((vert.x, vert.y))
-        polygons.append(Polygon(element_vertices, fill = False))
+        polygons.append(Polygon(element_vertices, fill=False))
 
     for polygon in polygons:
         ax.add_patch(polygon)
 
     plt.xlim(min_x * 1.1, max_x * 1.1)
     plt.ylim(min_y * 1.1, max_y * 1.1)
+
+    if additional_option == 1: # дополнительно отрисовывает на сетке Медианные Элементы
+        draw_grid_median_path(grid, ax, plt)
+    if additional_option == 2: # Средне Медианные Элементы
+        draw_grid_mean_median_path(grid, ax, plt)
+    if additional_option == 3: # И те, и те
+        draw_grid_median_path(grid, ax, plt)
+        draw_grid_mean_median_path(grid, ax, plt)
 
 
 def random_grid_translation(grid : data.Grid):

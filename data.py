@@ -28,6 +28,7 @@ class Vertex:
 class Edge:
     """
     Определяем Ребро, как две связанные Вершины. Хранит информацию об Элементе слева и справа.
+    Если Ребро граничное, то "правый элемент" равен "-1".
     """
     def __init__(self, v1 : int = -1, v2 : int = -1):
         self.v1 = v1
@@ -364,8 +365,7 @@ class Grid:
         first_boarder_edge_id = -1
         for vertex_edges_id in vertex_edges_ids:
             edge = self.edges[vertex_edges_id]
-            if (edge.v1 == v_id and self.vertices[edge.v2].is_at_boarder
-                    or edge.v2 == v_id and self.vertices[edge.v1].is_at_boarder): # 1
+            if (edge.v1 == v_id or edge.v2 == v_id) and edge.element_right == -1: # 1
                 first_boarder_edge_id = vertex_edges_id
                 break
 
@@ -407,8 +407,7 @@ class Grid:
                 last_boarder_edge_id = -1
                 for vertex_edges_id in vertex_edges_ids:
                     edge = self.edges[vertex_edges_id]
-                    if vertex_edges_id != first_boarder_edge_id and (edge.v1 == v_id and self.vertices[edge.v2].is_at_boarder
-                            or edge.v2 == v_id and self.vertices[edge.v1]):
+                    if vertex_edges_id != first_boarder_edge_id and (edge.v1 == v_id or edge.v2 == v_id) and edge.element_right == -1:
                         last_boarder_edge_id = vertex_edges_id
                         break
 
@@ -535,8 +534,7 @@ class Grid:
         first_boarder_edge_id = -1
         for vertex_edges_id in vertex_edges_ids:
             edge = self.edges[vertex_edges_id]
-            if (edge.v1 == v_id and self.vertices[edge.v2].is_at_boarder
-                    or edge.v2 == v_id and self.vertices[edge.v1].is_at_boarder):  # 1
+            if (edge.v1 == v_id or edge.v2 == v_id) and edge.element_right == -1: # 1
                 first_boarder_edge_id = vertex_edges_id
                 break
 
@@ -580,9 +578,7 @@ class Grid:
                 last_boarder_edge_id = -1
                 for vertex_edges_id in vertex_edges_ids:
                     edge = self.edges[vertex_edges_id]
-                    if vertex_edges_id != first_boarder_edge_id and (
-                            edge.v1 == v_id and self.vertices[edge.v2].is_at_boarder
-                            or edge.v2 == v_id and self.vertices[edge.v1]):
+                    if vertex_edges_id != first_boarder_edge_id and (edge.v1 == v_id or edge.v2 == v_id) and edge.element_right == -1:
                         last_boarder_edge_id = vertex_edges_id
                         break
 
