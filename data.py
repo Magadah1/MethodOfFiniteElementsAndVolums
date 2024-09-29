@@ -28,6 +28,7 @@ class Vertex:
 class Edge:
     """
     Определяем Ребро, как две связанные Вершины. Хранит информацию об Элементе слева и справа.
+    Если Ребро граничное, то "правый элемент" равен "-1".
     """
     def __init__(self, v1 : int = -1, v2 : int = -1):
         self.v1 = v1
@@ -84,16 +85,28 @@ class MedianEdge:
         self.next_vertex = next_vertex
 
 
+class ElementType(Enum):
+    """
+    Определяет тип Элемента сетки.
+    """
+    TRIANGLE = 0
+    RECTANGLE = 1
+    RANDOM = 2 # специальный тип, преобразуемый в один из вышеперечисленных
+
+
+
 class Element:
     """
     Определяет структуру произвольного Элемента.
     Содержит массив индексов своих Вершин, расположенных в определённом порядке (обходе).
     !! Индексы действительны только в пределах Сетки, содержащей данные Элементы и все их Вершины. !!
     Содержит массив индексов своих Рёбер в произвольном порядке.
+    Содержит сведения о типе Элемента.
     """
-    def __init__(self):
+    def __init__(self, element_type : ElementType):
         self.vertices_ids = []
         self.edges_ids = []
+        self.type = element_type
 
 
     def get_center(self, vertices : list[Vertex]):
@@ -131,10 +144,10 @@ class Element:
         """
         Возвращает площадь Элемента.
         """
-        if len(self.vertices_ids) == 3:
+        if self.type == ElementType.TRIANGLE:
             return self.get_triangle_area(vertices)
 
-        if len(self.vertices_ids) == 4:
+        if self.type == ElementType.RECTANGLE:
             return self.get_rectangle_area(vertices)
 
         return -1
@@ -194,17 +207,9 @@ class MedianElement:
         self.edges = list[MedianEdge]()
 
 
-class ElementsType(Enum):
-    """
-    Определяет тип Элементов сетки.
-    """
-    TRIANGLE = 0
-    RECTANGLE = 1
-
-
 class GridType(Enum):
     """
-    Определяет тип Сетки
+    Определяет тип Сетки.
     """
     RECTANGULAR = 0
     RADIAL = 1
@@ -217,14 +222,13 @@ class Grid:
     Содержит массив Рёбер.
     Содержит массив Элементов, состоящих из хранящихся в сетке Вершин и их общий тип.
     """
-    def __init__(self, grid_type : GridType = GridType.RECTANGULAR, elements_type : ElementsType = ElementsType.TRIANGLE):
+    def __init__(self, grid_type : GridType = GridType.RECTANGULAR):
         self.vertices = list[Vertex]()
         self.function_values = list[float]()
         self.function = None
         self.elements = list[Element]()
         self.edges = list[Edge]()
         self.grid_type = grid_type
-        self.elements_type = elements_type
 
 
     def set_grid_function(self, f):
@@ -361,8 +365,7 @@ class Grid:
         first_boarder_edge_id = -1
         for vertex_edges_id in vertex_edges_ids:
             edge = self.edges[vertex_edges_id]
-            if (edge.v1 == v_id and self.vertices[edge.v2].is_at_boarder
-                    or edge.v2 == v_id and self.vertices[edge.v1].is_at_boarder): # 1
+            if (edge.v1 == v_id or edge.v2 == v_id) and edge.element_right == -1: # 1
                 first_boarder_edge_id = vertex_edges_id
                 break
 
@@ -404,8 +407,7 @@ class Grid:
                 last_boarder_edge_id = -1
                 for vertex_edges_id in vertex_edges_ids:
                     edge = self.edges[vertex_edges_id]
-                    if vertex_edges_id != first_boarder_edge_id and (edge.v1 == v_id and self.vertices[edge.v2].is_at_boarder
-                            or edge.v2 == v_id and self.vertices[edge.v1]):
+                    if vertex_edges_id != first_boarder_edge_id and (edge.v1 == v_id or edge.v2 == v_id) and edge.element_right == -1:
                         last_boarder_edge_id = vertex_edges_id
                         break
 
@@ -532,8 +534,7 @@ class Grid:
         first_boarder_edge_id = -1
         for vertex_edges_id in vertex_edges_ids:
             edge = self.edges[vertex_edges_id]
-            if (edge.v1 == v_id and self.vertices[edge.v2].is_at_boarder
-                    or edge.v2 == v_id and self.vertices[edge.v1].is_at_boarder):  # 1
+            if (edge.v1 == v_id or edge.v2 == v_id) and edge.element_right == -1: # 1
                 first_boarder_edge_id = vertex_edges_id
                 break
 
@@ -577,9 +578,7 @@ class Grid:
                 last_boarder_edge_id = -1
                 for vertex_edges_id in vertex_edges_ids:
                     edge = self.edges[vertex_edges_id]
-                    if vertex_edges_id != first_boarder_edge_id and (
-                            edge.v1 == v_id and self.vertices[edge.v2].is_at_boarder
-                            or edge.v2 == v_id and self.vertices[edge.v1]):
+                    if vertex_edges_id != first_boarder_edge_id and (edge.v1 == v_id or edge.v2 == v_id) and edge.element_right == -1:
                         last_boarder_edge_id = vertex_edges_id
                         break
 
@@ -613,3 +612,16 @@ class Grid:
                 pivot_el_id = next_el_id
 
         return mean_median_element
+
+    def get_min_max_x_y(self):
+        min_x = 1e9
+        max_x = -1e9
+        min_y = 1e9
+        max_y = -1e9
+        for vertex in self.vertices:
+            min_x = min(min_x, vertex.x)
+            min_y = min(min_y, vertex.y)
+            max_x = max(max_x, vertex.x)
+            max_y = max(max_y, vertex.y)
+
+        return min_x, max_x, min_y, max_y

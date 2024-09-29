@@ -42,28 +42,49 @@ def main():
         print("around v%d: %d-elements;%d-edges"%(v_id, len(grid.get_vertex_elements(v_id)), len(grid.get_vertex_edges(v_id))))
 
     # рисуем Сетку
-    data_functions.random_grid_translation(grid)
-    fig, beforeNone = plt.subplots()
-    fig1, beforeLin = plt.subplots()
-    fig2, beforeQuad = plt.subplots()
+    # data_functions.random_grid_translation(grid)
 
+    fig, beforeNone = plt.subplots()
     data_functions.draw_grid(grid, beforeNone)
+
+    fig1, beforeLin = plt.subplots()
     grid.set_grid_function(lambda x, y : x + y)
     data_functions.draw_function_on_grid(grid, beforeLin)
+
+    fig2, beforeQuad = plt.subplots()
     grid.set_grid_function(lambda x, y : (x ** 2 + y ** 2) ** 0.5)
     data_functions.draw_function_on_grid(grid, beforeQuad)
 
     solvers.solve_grid_deformation(grid)
 
     fig3, afterNone = plt.subplots()
-    fig4, afterLin = plt.subplots()
-    fig5, afterQuad = plt.subplots()
-
     data_functions.draw_grid(grid, afterNone)
+
+    fig4, afterLin = plt.subplots()
     grid.set_grid_function(lambda x, y : x + y)
     data_functions.draw_function_on_grid(grid, afterLin)
+
+    fig5, afterQuad = plt.subplots()
     grid.set_grid_function(lambda x, y : (x ** 2 + y ** 2) ** 0.5)
     data_functions.draw_function_on_grid(grid, afterQuad)
+
+    fig6, path = plt.subplots()
+    data_functions.draw_grid_path(grid, path, plt)
+
+    fig7, pathWithMed = plt.subplots()
+    data_functions.draw_grid_path(grid, pathWithMed, plt, 1)
+
+    fig8, pathWithMeanMed = plt.subplots()
+    data_functions.draw_grid_path(grid, pathWithMeanMed, plt, 2)
+
+    fig9, pathWithBothMedians = plt.subplots()
+    data_functions.draw_grid_path(grid, pathWithBothMedians, plt, 3)
+
+    fig10, onlyMed = plt.subplots()
+    data_functions.draw_grid_median_path(grid, onlyMed, plt)
+
+    fig11, onlyMeanMed = plt.subplots()
+    data_functions.draw_grid_mean_median_path(grid, onlyMeanMed, plt)
 
     plt.show()
 
