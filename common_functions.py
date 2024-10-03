@@ -97,6 +97,7 @@ def dfi2_integral(v1: data.Vertex, v2: data.Vertex, v3: data.Vertex, v_id1: int,
 def fi_integral(grid : data.Grid, el_id : int, v_id : int):
     """
     Считает интеграл формы треугольника по Элементу с индексом el_id.
+    1 <= v_id <= 3 : относительно Вершин Элемента в его массиве element.vertices_ids.
     """
     element = grid.elements[el_id]
 
@@ -104,7 +105,17 @@ def fi_integral(grid : data.Grid, el_id : int, v_id : int):
         return None
 
     if element.is_at_border(grid.edges):
-        pass
+        res = 0
+        for edge_id in element.edges_ids:
+            edge = grid.edges[edge_id]
+            if edge.element_right == -1:
+                edge_center = edge.get_center(grid.vertices)
+                res += triangle_form(grid.vertices[element.vertices_ids[0]],
+                                     grid.vertices[element.vertices_ids[1]],
+                                     grid.vertices[element.vertices_ids[2]],
+                                     edge_center,
+                                     v_id)
+        return res
     else:
         # q = 1, r = s = 0 in q!r!s!/(q+r+s+2)! * 2F
         # не зависит от номера формы
@@ -116,6 +127,7 @@ def fi_integral(grid : data.Grid, el_id : int, v_id : int):
 def fi2_integral(grid: data.Grid, el_id: int, v_id1: int, v_id2 : int):
     """
     Считает интеграл двух форм треугольника по Элементу с индексом el_id.
+    1 <= v_id1(2) <= 3 : относительно Вершин Элемента в его массиве element.vertices_ids.
     """
     element = grid.elements[el_id]
 
@@ -123,7 +135,22 @@ def fi2_integral(grid: data.Grid, el_id: int, v_id1: int, v_id2 : int):
         return None
 
     if element.is_at_border(grid.edges):
-        pass
+        res = 0
+        for edge_id in element.edges_ids:
+            edge = grid.edges[edge_id]
+            if edge.element_right == -1:
+                edge_center = edge.get_center(grid.vertices)
+                res += (triangle_form(grid.vertices[element.vertices_ids[0]],
+                                     grid.vertices[element.vertices_ids[1]],
+                                     grid.vertices[element.vertices_ids[2]],
+                                     edge_center,
+                                     v_id1) *
+                        triangle_form(grid.vertices[element.vertices_ids[0]],
+                                     grid.vertices[element.vertices_ids[1]],
+                                     grid.vertices[element.vertices_ids[2]],
+                                     edge_center,
+                                     v_id2))
+        return res
     else:
         # q = r = 1, s = 0 in q!r!s!/(q+r+s+2)! * 2F
         # не зависит от номера формы
