@@ -3,6 +3,8 @@ import math
 from enum import Enum
 from accessify import private
 
+import data
+
 
 class Material:
     """
@@ -132,12 +134,25 @@ class Element:
     def __and__(self, other):
         """
         Перегружает оператор "&". Возвращает индекс общего Ребра двух Элементов. Если нет общего Ребра - возвращает None.
+        НЕИСПОЛЬЗУЕТСЯ
         """
         for edge_id in self.edges_ids:
             if edge_id in other.edges_ids:
                 return edge_id
 
         return None
+
+
+    def is_at_border(self, edges : list[data.Edge]):
+        """
+        Определяет, является ли элемент граничным.
+        """
+        for edge_id in self.edges_ids:
+            edge = edges[edge_id]
+            if edge.element_right == -1:
+                return True
+
+        return False
 
 
     def get_area(self, vertices : list[Vertex]):
